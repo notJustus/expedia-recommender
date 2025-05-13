@@ -169,6 +169,7 @@ def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     Each feature is handled by its own function.
     """
     df = df.copy() # Ensure we are working on a copy from the start
+    df['date_time'] = pd.to_datetime(df['date_time'])
 
     # Create indicator for visitor purchase history BEFORE imputing the related columns
     df['has_visitor_purchase_history'] = df['visitor_hist_starrating'].notnull().astype(int)
