@@ -2,17 +2,17 @@ import pandas as pd
 
 def handle_missing_visitor_hist_starrating(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'visitor_hist_starrating' feature."""
-    # TODO: Implement missing value handling for visitor_hist_starrating
+    df['visitor_hist_starrating'] = df['visitor_hist_starrating'].fillna(0)
     return df
 
 def handle_missing_visitor_hist_adr_usd(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'visitor_hist_adr_usd' feature."""
-    # TODO: Implement missing value handling for visitor_hist_adr_usd
+    df['visitor_hist_adr_usd'] = df['visitor_hist_adr_usd'].fillna(0)
     return df
 
 def handle_missing_prop_review_score(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'prop_review_score' feature."""
-    # TODO: Implement missing value handling for prop_review_score
+    df['prop_review_score'] = df['prop_review_score'].fillna(0)
     return df
 
 def handle_missing_prop_location_score2(df: pd.DataFrame) -> pd.DataFrame:
@@ -22,7 +22,13 @@ def handle_missing_prop_location_score2(df: pd.DataFrame) -> pd.DataFrame:
 
 def handle_missing_srch_query_affinity_score(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'srch_query_affinity_score' feature."""
-    # TODO: Implement missing value handling for srch_query_affinity_score
+    min_affinity_score = df['srch_query_affinity_score'].min()
+    # If all values are NaN, min_affinity_score will be NaN.
+    # In that case, or if min_affinity_score is not negative (which is unexpected based on description),
+    # we can choose a default small negative value. For now, let's assume it's usually negative.
+    # A more robust approach might involve a fixed small negative if min is NaN or non-negative.
+    fill_value = min_affinity_score - 100 if pd.notna(min_affinity_score) else -999 # Arbitrary very small value if all are NaN
+    df['srch_query_affinity_score'] = df['srch_query_affinity_score'].fillna(fill_value)
     return df
 
 def handle_missing_orig_destination_distance(df: pd.DataFrame) -> pd.DataFrame:
@@ -160,7 +166,12 @@ def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     Handles missing values for all specified features.
     Each feature is handled by its own function.
     """
-    df = handle_missing_visitor_hist_starrating(df.copy())
+    df = df.copy() # Ensure we are working on a copy from the start
+
+    # Create indicator for visitor purchase history BEFORE imputing the related columns
+    df['has_visitor_purchase_history'] = df['visitor_hist_starrating'].notnull().astype(int)
+
+    df = handle_missing_visitor_hist_starrating(df)
     df = handle_missing_visitor_hist_adr_usd(df)
     df = handle_missing_prop_review_score(df)
     df = handle_missing_prop_location_score2(df)
