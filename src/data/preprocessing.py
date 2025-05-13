@@ -40,127 +40,127 @@ def handle_missing_orig_destination_distance(df: pd.DataFrame) -> pd.DataFrame:
 
 def handle_missing_comp1_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp1_rate' feature."""
-    # TODO: Implement missing value handling for comp1_rate
+    df['comp1_rate'] = df['comp1_rate'].fillna(0)
     return df
 
 def handle_missing_comp1_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp1_inv' feature."""
-    # TODO: Implement missing value handling for comp1_inv
+    df['comp1_inv'] = df['comp1_inv'].fillna(0)
     return df
 
 def handle_missing_comp1_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp1_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp1_rate_percent_diff
+    df['comp1_rate_percent_diff'] = df['comp1_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_comp2_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp2_rate' feature."""
-    # TODO: Implement missing value handling for comp2_rate
+    df['comp2_rate'] = df['comp2_rate'].fillna(0)
     return df
 
 def handle_missing_comp2_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp2_inv' feature."""
-    # TODO: Implement missing value handling for comp2_inv
+    df['comp2_inv'] = df['comp2_inv'].fillna(0)
     return df
 
 def handle_missing_comp2_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp2_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp2_rate_percent_diff
+    df['comp2_rate_percent_diff'] = df['comp2_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_comp3_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp3_rate' feature."""
-    # TODO: Implement missing value handling for comp3_rate
+    df['comp3_rate'] = df['comp3_rate'].fillna(0)
     return df
 
 def handle_missing_comp3_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp3_inv' feature."""
-    # TODO: Implement missing value handling for comp3_inv
+    df['comp3_inv'] = df['comp3_inv'].fillna(0)
     return df
 
 def handle_missing_comp3_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp3_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp3_rate_percent_diff
+    df['comp3_rate_percent_diff'] = df['comp3_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_comp4_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp4_rate' feature."""
-    # TODO: Implement missing value handling for comp4_rate
+    df['comp4_rate'] = df['comp4_rate'].fillna(0)
     return df
 
 def handle_missing_comp4_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp4_inv' feature."""
-    # TODO: Implement missing value handling for comp4_inv
+    df['comp4_inv'] = df['comp4_inv'].fillna(0)
     return df
 
 def handle_missing_comp4_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp4_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp4_rate_percent_diff
+    df['comp4_rate_percent_diff'] = df['comp4_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_comp5_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp5_rate' feature."""
-    # TODO: Implement missing value handling for comp5_rate
+    df['comp5_rate'] = df['comp5_rate'].fillna(0)
     return df
 
 def handle_missing_comp5_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp5_inv' feature."""
-    # TODO: Implement missing value handling for comp5_inv
+    df['comp5_inv'] = df['comp5_inv'].fillna(0)
     return df
 
 def handle_missing_comp5_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp5_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp5_rate_percent_diff
+    df['comp5_rate_percent_diff'] = df['comp5_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_comp6_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp6_rate' feature."""
-    # TODO: Implement missing value handling for comp6_rate
+    df['comp6_rate'] = df['comp6_rate'].fillna(0)
     return df
 
 def handle_missing_comp6_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp6_inv' feature."""
-    # TODO: Implement missing value handling for comp6_inv
+    df['comp6_inv'] = df['comp6_inv'].fillna(0)
     return df
 
 def handle_missing_comp6_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp6_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp6_rate_percent_diff
+    df['comp6_rate_percent_diff'] = df['comp6_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_comp7_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp7_rate' feature."""
-    # TODO: Implement missing value handling for comp7_rate
+    df['comp7_rate'] = df['comp7_rate'].fillna(0)
     return df
 
 def handle_missing_comp7_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp7_inv' feature."""
-    # TODO: Implement missing value handling for comp7_inv
+    df['comp7_inv'] = df['comp7_inv'].fillna(0)
     return df
 
 def handle_missing_comp7_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp7_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp7_rate_percent_diff
+    df['comp7_rate_percent_diff'] = df['comp7_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_comp8_rate(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp8_rate' feature."""
-    # TODO: Implement missing value handling for comp8_rate
+    df['comp8_rate'] = df['comp8_rate'].fillna(0)
     return df
 
 def handle_missing_comp8_inv(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp8_inv' feature."""
-    # TODO: Implement missing value handling for comp8_inv
+    df['comp8_inv'] = df['comp8_inv'].fillna(0)
     return df
 
 def handle_missing_comp8_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'comp8_rate_percent_diff' feature."""
-    # TODO: Implement missing value handling for comp8_rate_percent_diff
+    df['comp8_rate_percent_diff'] = df['comp8_rate_percent_diff'].fillna(0)
     return df
 
 def handle_missing_gross_bookings_usd(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'gross_bookings_usd' feature."""
-    # TODO: Implement missing value handling for gross_bookings_usd
+    df['gross_bookings_usd'] = df['gross_bookings_usd'].fillna(0)
     return df
 
 def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
@@ -187,6 +187,11 @@ def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     df['orig_destination_distance_is_missing'] = df['orig_destination_distance'].isnull().astype(int)
 
     df = handle_missing_orig_destination_distance(df)
+
+    # Create indicator variables for competitor data presence BEFORE imputing
+    for i in range(1, 9):
+        df[f'comp{i}_has_data'] = df[f'comp{i}_rate'].notnull().astype(int)
+
     df = handle_missing_comp1_rate(df)
     df = handle_missing_comp1_inv(df)
     df = handle_missing_comp1_rate_percent_diff(df)
