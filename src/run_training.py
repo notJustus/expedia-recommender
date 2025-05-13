@@ -14,8 +14,8 @@ from data.preprocessing import handle_missing_values
 from models.lambdamart import (
     create_relevance_target,
     train_lambdamart_model,
-    # predict_relevance_scores, # Not using for now, but good to have
-    # format_submission_file # Not using for now
+    predict_relevance_scores,
+    format_submission_file
 )
 
 def define_feature_columns(df: pd.DataFrame) -> list[str]:
@@ -44,7 +44,7 @@ def main():
     try:
         # Load a subset for faster development/testing if needed
         # For full run, set nrows=None or remove it.
-        train_df = pd.read_csv(data_file_path, nrows=500000) # Using 500k rows for quicker dev
+        train_df = pd.read_csv(data_file_path) #  nrows=500000 Using 500k rows for quicker dev
     except FileNotFoundError:
         print(f"Error: {data_file_path} not found. Please ensure the path is correct from the workspace root.")
         return
@@ -127,6 +127,68 @@ def main():
         print("\nCould not retrieve feature importances from the model.")
 
     print("\nTraining pipeline finished successfully.")
+
+    # 8. Prediction on Test Set
+    print("\nStarting prediction pipeline for test set...")
+    test_data_file_path = 'data/test.csv' # Relative to workspace root
+    submission_file_path = 'submission.csv' # Output to workspace root
+
+    print(f"Loading {test_data_file_path}...")
+    try:
+        # Using nrows for consistency and speed during development. Set to None for full run.
+        test_df = pd.read_csv(test_data_file_path) # nrows=500000 Using 500k rows for quicker dev
+    except FileNotFoundError:
+        print(f"Error: {test_data_file_path} not found. Please ensure the path is correct from the workspace root.")
+        return
+    print(f"Test data loaded. Shape: {test_df.shape}")
+
+    # Keep original IDs for submission
+    test_ids_df = test_df[['srch_id', 'prop_id']].copy()
+
+    print("Preprocessing test data...")
+    # Important: For a simple version, we use handle_missing_values directly.
+    # This means imputation stats (medians, etc.) for a few columns will be derived from the test set itself.
+    # A more advanced version would fit these on the training set and apply to the test set.
+    test_df_processed = handle_missing_values(test_df.copy())
+    print(f"Test data preprocessing complete. Shape: {test_df_processed.shape}")
+
+    # Ensure all feature columns used for training are present in the processed test data.
+    # If any are missing (e.g., a column was all NaN in test and got dropped, or wasn't created),
+    # they need to be added, typically with a default value like 0.
+    missing_cols_in_test = set(feature_columns) - set(test_df_processed.columns)
+    if missing_cols_in_test:
+        print(f"Warning: The following feature columns are missing in the processed test set and will be added with 0: {missing_cols_in_test}")
+        for col in missing_cols_in_test:
+            test_df_processed[col] = 0
+    
+    # Ensure order of columns matches training data
+    X_test = test_df_processed[feature_columns]
+
+    print("Predicting relevance scores on test set...")
+    test_predictions = predict_relevance_scores(
+        model,
+        X_test,
+        feature_names=feature_columns
+    )
+
+    # Add predictions and original IDs back for submission formatting
+    submission_df_prep = test_ids_df.copy()
+    submission_df_prep['relevance_score'] = test_predictions
+
+    print("Formatting submission file...")
+    submission_output = format_submission_file(
+        submission_df_prep, # This df must have srch_id, prop_id, and relevance_score
+        group_col='srch_id',
+        item_col='prop_id',
+        score_col='relevance_score'
+    )
+
+    print(f"Saving submission file to {submission_file_path}...")
+    submission_output.to_csv(submission_file_path, index=False)
+    print(f"Submission file saved. Shape: {submission_output.shape}")
+    print(submission_output.head())
+
+    print("\nFull pipeline (train and predict) finished successfully.")
 
 if __name__ == '__main__':
     main() 
