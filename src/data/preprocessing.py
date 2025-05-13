@@ -17,7 +17,8 @@ def handle_missing_prop_review_score(df: pd.DataFrame) -> pd.DataFrame:
 
 def handle_missing_prop_location_score2(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'prop_location_score2' feature."""
-    # TODO: Implement missing value handling for prop_location_score2
+    median_val = df['prop_location_score2'].median()
+    df['prop_location_score2'] = df['prop_location_score2'].fillna(median_val)
     return df
 
 def handle_missing_srch_query_affinity_score(df: pd.DataFrame) -> pd.DataFrame:
@@ -33,7 +34,8 @@ def handle_missing_srch_query_affinity_score(df: pd.DataFrame) -> pd.DataFrame:
 
 def handle_missing_orig_destination_distance(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'orig_destination_distance' feature."""
-    # TODO: Implement missing value handling for orig_destination_distance
+    median_val = df['orig_destination_distance'].median()
+    df['orig_destination_distance'] = df['orig_destination_distance'].fillna(median_val)
     return df
 
 def handle_missing_comp1_rate(df: pd.DataFrame) -> pd.DataFrame:
@@ -174,8 +176,16 @@ def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     df = handle_missing_visitor_hist_starrating(df)
     df = handle_missing_visitor_hist_adr_usd(df)
     df = handle_missing_prop_review_score(df)
+
+    # Create indicator for prop_location_score2 missingness BEFORE imputing
+    df['prop_location_score2_is_missing'] = df['prop_location_score2'].isnull().astype(int)
+
     df = handle_missing_prop_location_score2(df)
     df = handle_missing_srch_query_affinity_score(df)
+
+    # Create indicator for orig_destination_distance missingness BEFORE imputing
+    df['orig_destination_distance_is_missing'] = df['orig_destination_distance'].isnull().astype(int)
+
     df = handle_missing_orig_destination_distance(df)
     df = handle_missing_comp1_rate(df)
     df = handle_missing_comp1_inv(df)
