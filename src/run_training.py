@@ -131,7 +131,7 @@ def main():
     # 8. Prediction on Test Set
     print("\nStarting prediction pipeline for test set...")
     test_data_file_path = 'data/test.csv' # Relative to workspace root
-    submission_file_path = 'submission.csv' # Output to workspace root
+    submission_file_path = 'submission/submission.csv' # Output to workspace root
 
     print(f"Loading {test_data_file_path}...")
     try:

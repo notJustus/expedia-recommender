@@ -158,11 +158,6 @@ def handle_missing_comp8_rate_percent_diff(df: pd.DataFrame) -> pd.DataFrame:
     df['comp8_rate_percent_diff'] = df['comp8_rate_percent_diff'].fillna(0)
     return df
 
-def handle_missing_gross_bookings_usd(df: pd.DataFrame) -> pd.DataFrame:
-    """Handles missing values for the 'gross_bookings_usd' feature."""
-    df['gross_bookings_usd'] = df['gross_bookings_usd'].fillna(0)
-    return df
-
 def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     Handles missing values for all specified features.
@@ -217,6 +212,5 @@ def handle_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     df = handle_missing_comp8_rate(df)
     df = handle_missing_comp8_inv(df)
     df = handle_missing_comp8_rate_percent_diff(df)
-    # df = handle_missing_gross_bookings_usd(df) # Not included in test set
     
     return df
