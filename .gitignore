@@ -23,6 +23,7 @@ wheels/
 # Jupyter Notebook
 .ipynb_checkpoints
 create_notebook.py
+notebooks/edaExpedia.ipynb
 
 # Virtual Environment
 venv/
