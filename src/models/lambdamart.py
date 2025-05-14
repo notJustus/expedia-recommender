@@ -24,6 +24,7 @@ def train_lambdamart_model(
     y_val: pd.Series,
     group_val: pd.Series,
     feature_names: list[str],
+    categorical_features: list[str] | None = None,
     params: dict | None = None
 ) -> lgb.LGBMRanker:
     """
@@ -53,7 +54,8 @@ def train_lambdamart_model(
         eval_set=[(X_val[feature_names], y_val)],
         eval_group=[group_val],
         eval_at=[5], # Evaluate NDCG@5 during training
-        callbacks=[lgb.early_stopping(10, verbose=True)]
+        callbacks=[lgb.early_stopping(10, verbose=True)],
+        categorical_feature=categorical_features
     )
     print("Training complete.")
     return ranker
@@ -166,7 +168,8 @@ if __name__ == '__main__':
     lgbm_ranker = train_lambdamart_model(
         X_train, y_train, group_train,
         X_val, y_val, group_val,
-        feature_names=feature_columns
+        feature_names=feature_columns,
+        categorical_features=['promotion_flag']
     )
 
     # 6. Predict on a "test" set (using validation set for this example)

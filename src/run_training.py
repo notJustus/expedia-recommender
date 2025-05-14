@@ -24,9 +24,8 @@ def define_feature_columns(df: pd.DataFrame) -> list[str]:
     Excludes ID columns, raw target columns, and the final relevance score.
     """
     excluded_cols = [
-        'srch_id', 'date_time', 'site_id', 'visitor_location_country_id',
-        'prop_country_id', 'prop_id', 'srch_destination_id',
-        'click_bool', 'booking_bool', 'gross_bookings_usd', 'position', # Target-related or leaky
+        'click_bool', 'booking_bool', 'gross_bookings_usd', 'position', # Not in testing set
+        'date_time', 'srch_id',
         'relevance' # Target variable
     ]
     # Features created during preprocessing (e.g., _is_missing, _has_data) are included.
@@ -44,7 +43,7 @@ def main():
     try:
         # Load a subset for faster development/testing if needed
         # For full run, set nrows=None or remove it.
-        train_df = pd.read_csv(data_file_path) #  nrows=500000 Using 500k rows for quicker dev
+        train_df = pd.read_csv(data_file_path, nrows=500000) #  nrows=500000 Using 500k rows for quicker dev
     except FileNotFoundError:
         print(f"Error: {data_file_path} not found. Please ensure the path is correct from the workspace root.")
         return
@@ -107,13 +106,37 @@ def main():
     print(f"Number of groups in training set: {len(group_train)}, total items: {group_train.sum()}")
     print(f"Number of groups in validation set: {len(group_val)}, total items: {group_val.sum()}")
 
+    # Define categorical features
+    # Base list of known categorical features
+    categorical_feature_names = [
+        'site_id', 'visitor_location_country_id', 'prop_country_id',
+        'prop_brand_bool', 'promotion_flag', 'srch_destination_id',
+        'srch_saturday_night_bool', 'random_bool', 'prop_starrating',
+        'prop_review_score'
+    ]
+    # Add compX_rate and compX_inv features
+    for i in range(1, 9): # comp1 to comp8
+        categorical_feature_names.append(f'comp{i}_rate')
+        categorical_feature_names.append(f'comp{i}_inv')
+
+    # Filter the list to include only those present in the current feature_columns
+    # This is important because feature_columns might change based on preprocessing or selection
+    final_categorical_features = [col for col in categorical_feature_names if col in feature_columns]
+    
+    if len(final_categorical_features) < len(categorical_feature_names):
+        print("Warning: Not all predefined categorical features were found in feature_columns.")
+        print(f"Predefined: {categorical_feature_names}")
+        print(f"Found in feature_columns: {final_categorical_features}")
+    else:
+        print(f"Using the following categorical features: {final_categorical_features}")
 
     # 6. Train LambdaMART model
     print("Training LambdaMART model...")
     model = train_lambdamart_model(
         X_train, y_train, group_train,
         X_val, y_val, group_val,
-        feature_names=feature_columns
+        feature_names=feature_columns,
+        categorical_features=final_categorical_features # Pass the filtered list
         # Pass custom params if needed, e.g., params={'n_estimators': 50}
     )
     print("Model training complete.")
@@ -136,7 +159,7 @@ def main():
     print(f"Loading {test_data_file_path}...")
     try:
         # Using nrows for consistency and speed during development. Set to None for full run.
-        test_df = pd.read_csv(test_data_file_path) # nrows=500000 Using 500k rows for quicker dev
+        test_df = pd.read_csv(test_data_file_path,  nrows=500000) # nrows=500000 Using 500k rows for quicker dev
     except FileNotFoundError:
         print(f"Error: {test_data_file_path} not found. Please ensure the path is correct from the workspace root.")
         return
