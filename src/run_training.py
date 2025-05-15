@@ -30,8 +30,9 @@ LOGS_DIR = "logs"
 
 # Development/Debug flag (set to None for full run)
 # NROWS_CONFIG = 500000 # For faster development with a subset of data
-NROWS_CONFIG = 500000 # For full run
-PERFORM_IMPUTATION = False # Set to False to skip missing value imputation
+NROWS_CONFIG = 2000000 # For full run
+PERFORM_IMPUTATION = True # Set to False to skip missing value imputation
+PERFORM_FEATURE_ENGINEERING = True # Set to False to skip feature engineering
 
 
 # --- Helper Functions ---
@@ -68,13 +69,16 @@ def preprocess_and_engineer_features(
         print(f"Missing values handled. Shape after imputation: {df_processed_stage1.shape}")
     else:
         print("Skipping missing value imputation as per PERFORM_IMPUTATION flag.")
-        # If not imputing, ensure imputation_params_for_test (if this is test run) is None for consistency,
-        # and calculated_imputation_params (if this is train run) remains None.
         if not is_train:
-            imputation_params_for_test = None # Ensure test doesn't use old params if train skipped
+            imputation_params_for_test = None
     
     # Apply feature engineering regardless of imputation, on the current state of df_processed_stage1
-    df_engineered = apply_feature_engineering(df_processed_stage1)
+    if PERFORM_FEATURE_ENGINEERING:
+        print("Performing feature engineering...")
+        df_engineered = apply_feature_engineering(df_processed_stage1)
+    else:
+        print("Skipping feature engineering as per PERFORM_FEATURE_ENGINEERING flag.")
+        df_engineered = df_processed_stage1 # Pass through if not engineering
     
     print(f"Preprocessing & feature engineering complete. Final shape: {df_engineered.shape}")
     return df_engineered, calculated_imputation_params
@@ -347,10 +351,9 @@ def main():
         'site_id', 'visitor_location_country_id', 'prop_country_id',
         'prop_brand_bool', 'promotion_flag', 'srch_destination_id',
         'srch_saturday_night_bool', 'random_bool', 'prop_starrating', 'prop_review_score',
-        # Add new categorical indicators if any were created by handle_missing_values
-        'has_visitor_purchase_history', 'prop_location_score2_is_missing', 'orig_destination_distance_is_missing'
-    ] + [f'comp{i}_{suffix}' for i in range(1, 9) for suffix in ['rate', 'inv']] \
-      + [f'comp{i}_has_data' for i in range(1, 9)] # Add comp_has_data indicators
+        # Newly added date/time categorical features
+        'search_hour_of_day', 'search_day_of_week', 'search_month', 'is_weekend_search'
+    ] + [f'comp{i}_{suffix}' for i in range(1, 9) for suffix in ['rate', 'inv']]
     
     categorical_features_final = get_categorical_features(feature_cols, predefined_cats)
 

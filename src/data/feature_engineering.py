@@ -36,31 +36,49 @@ def _create_domestic_travel_feature(df: pd.DataFrame) -> pd.DataFrame:
     df['is_domestic_travel'] = comparison_result.astype(float).fillna(0).astype(int)
     return df
 
-# New private functions for features previously in preprocessing.add_engineered_features
-def _create_historical_price_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Creates features based on historical price data."""
-    if 'prop_log_historical_price' in df.columns and 'price_usd' in df.columns:
-        df['historical_price_usd'] = np.exp(df['prop_log_historical_price'])
-        df['price_diff_from_historical_abs'] = df['price_usd'] - df['historical_price_usd']
-        df['price_ratio_to_historical'] = df['price_usd'] / df['historical_price_usd'].replace(0, np.nan)
-        df['price_ratio_to_historical'] = df['price_ratio_to_historical'].fillna(1)
+# --- New Date & Time Feature Functions ---
+def _create_search_hour_of_day_feature(df: pd.DataFrame) -> pd.DataFrame:
+    """Extracts the hour of the day from 'date_time'."""
+    if 'date_time' in df.columns and pd.api.types.is_datetime64_any_dtype(df['date_time']):
+        df['search_hour_of_day'] = df['date_time'].dt.hour
+    else:
+        df['search_hour_of_day'] = np.nan # Or some other default if date_time is missing/not datetime
     return df
 
-def _create_starrating_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Creates features based on property and visitor star ratings."""
-    if ('prop_starrating' in df.columns and 
-        'visitor_hist_starrating' in df.columns and 
-        'has_visitor_purchase_history' in df.columns):
-        df['starrating_diff_from_hist'] = df['prop_starrating'] - df['visitor_hist_starrating']
-        df.loc[df['has_visitor_purchase_history'] == 0, 'starrating_diff_from_hist'] = 0
+def _create_search_day_of_week_feature(df: pd.DataFrame) -> pd.DataFrame:
+    """Extracts the day of the week (0=Monday, 6=Sunday) from 'date_time'."""
+    if 'date_time' in df.columns and pd.api.types.is_datetime64_any_dtype(df['date_time']):
+        df['search_day_of_week'] = df['date_time'].dt.dayofweek
+    else:
+        df['search_day_of_week'] = np.nan
     return df
 
-def _create_review_score_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Creates features based on review scores and star ratings."""
-    if 'prop_review_score' in df.columns and 'prop_starrating' in df.columns:
-        df['review_per_star'] = df['prop_review_score'] / df['prop_starrating'].replace(0, np.nan)
-        df['review_per_star'] = df['review_per_star'].fillna(df['prop_review_score'])
+def _create_search_month_feature(df: pd.DataFrame) -> pd.DataFrame:
+    """Extracts the month from 'date_time'."""
+    if 'date_time' in df.columns and pd.api.types.is_datetime64_any_dtype(df['date_time']):
+        df['search_month'] = df['date_time'].dt.month
+    else:
+        df['search_month'] = np.nan
     return df
+
+def _create_is_weekend_search_feature(df: pd.DataFrame) -> pd.DataFrame:
+    """Creates a boolean feature (0 or 1) if search was on a weekend (Sat=5, Sun=6)."""
+    if 'date_time' in df.columns and pd.api.types.is_datetime64_any_dtype(df['date_time']):
+        # dayofweek: Monday=0 to Sunday=6
+        df['is_weekend_search'] = df['date_time'].dt.dayofweek.isin([5, 6]).astype(int)
+    else:
+        df['is_weekend_search'] = 0 # Default to not weekend if no date_time
+    return df
+
+def _create_booking_window_weeks_feature(df: pd.DataFrame) -> pd.DataFrame:
+    """Converts 'srch_booking_window' (days) into weeks."""
+    if 'srch_booking_window' in df.columns:
+        df['booking_window_weeks'] = (df['srch_booking_window'] / 7).round().astype(float) # Keep as float for potential NaNs or use int if NaNs are handled
+    else:
+        df['booking_window_weeks'] = np.nan
+    return df
+
+# --- End New Date & Time Feature Functions ---
 
 def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -80,10 +98,13 @@ def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df_engineered = _create_value_for_money_score(df_engineered)
     df_engineered = _create_domestic_travel_feature(df_engineered)
 
-    # Newly integrated features
-    df_engineered = _create_historical_price_features(df_engineered)
-    df_engineered = _create_starrating_features(df_engineered)
-    df_engineered = _create_review_score_features(df_engineered)
+    # Add Date & Time features
+    print("Applying date & time features...")
+    df_engineered = _create_search_hour_of_day_feature(df_engineered)
+    df_engineered = _create_search_day_of_week_feature(df_engineered)
+    df_engineered = _create_search_month_feature(df_engineered)
+    df_engineered = _create_is_weekend_search_feature(df_engineered)
+    df_engineered = _create_booking_window_weeks_feature(df_engineered)
 
-    print(f"Feature engineering complete. Example cols: {df_engineered.columns[:10].tolist()}...")
+    print(f"Feature engineering complete. Example cols: {df_engineered.columns[:15].tolist()}...") # Adjusted to show more cols
     return df_engineered
