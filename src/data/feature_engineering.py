@@ -273,6 +273,222 @@ def _add_avg_search_context_features(df: pd.DataFrame) -> pd.DataFrame:
             
     return df_with_search_ctx
 
+def _add_stddev_search_context_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates standard deviation of property-related features per srch_id.
+    """
+    print("Adding stddev search context features (grouped by srch_id)...")
+    df_with_search_stddev = df.copy()
+    features_to_aggregate_by_search = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag',
+        'prop_brand_bool',
+        'orig_destination_distance'
+    ]
+    for feature in features_to_aggregate_by_search:
+        if feature in df_with_search_stddev.columns:
+            agg_feature_name = f'stddev_{feature}_in_search'
+            try:
+                aggregates = df_with_search_stddev.groupby('srch_id')[feature].transform('std')
+                df_with_search_stddev[agg_feature_name] = aggregates.fillna(0) # Fill NaN stddevs (e.g. single item groups)
+                print(f"  Added {agg_feature_name}")
+            except Exception as e:
+                print(f"  Could not compute stddev for {feature} in search. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found, skipping stddev for search context.")
+    return df_with_search_stddev
+
+def _add_median_search_context_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates median of property-related features per srch_id.
+    """
+    print("Adding median search context features (grouped by srch_id)...")
+    df_with_search_median = df.copy()
+    features_to_aggregate_by_search = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag',
+        'prop_brand_bool',
+        'orig_destination_distance'
+    ]
+    for feature in features_to_aggregate_by_search:
+        if feature in df_with_search_median.columns:
+            agg_feature_name = f'median_{feature}_in_search'
+            try:
+                aggregates = df_with_search_median.groupby('srch_id')[feature].transform('median')
+                df_with_search_median[agg_feature_name] = aggregates
+                print(f"  Added {agg_feature_name}")
+            except Exception as e:
+                print(f"  Could not compute median for {feature} in search. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found, skipping median for search context.")
+    return df_with_search_median
+
+def _add_min_search_context_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates min of property-related features per srch_id.
+    """
+    print("Adding min search context features (grouped by srch_id)...")
+    df_with_search_min = df.copy()
+    features_to_aggregate_by_search = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag',
+        'prop_brand_bool',
+        'orig_destination_distance'
+    ]
+    for feature in features_to_aggregate_by_search:
+        if feature in df_with_search_min.columns:
+            agg_feature_name = f'min_{feature}_in_search'
+            try:
+                aggregates = df_with_search_min.groupby('srch_id')[feature].transform('min')
+                df_with_search_min[agg_feature_name] = aggregates
+                print(f"  Added {agg_feature_name}")
+            except Exception as e:
+                print(f"  Could not compute min for {feature} in search. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found, skipping min for search context.")
+    return df_with_search_min
+
+def _add_max_search_context_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates max of property-related features per srch_id.
+    """
+    print("Adding max search context features (grouped by srch_id)...")
+    df_with_search_max = df.copy()
+    features_to_aggregate_by_search = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag',
+        'prop_brand_bool',
+        'orig_destination_distance'
+    ]
+    for feature in features_to_aggregate_by_search:
+        if feature in df_with_search_max.columns:
+            agg_feature_name = f'max_{feature}_in_search'
+            try:
+                aggregates = df_with_search_max.groupby('srch_id')[feature].transform('max')
+                df_with_search_max[agg_feature_name] = aggregates
+                print(f"  Added {agg_feature_name}")
+            except Exception as e:
+                print(f"  Could not compute max for {feature} in search. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found, skipping max for search context.")
+    return df_with_search_max
+
+# --- New Contextual Features ---
+
+def _add_price_relative_to_search_avg(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates price relative to the average price in the search context (srch_id).
+    - price_deviation_from_search_avg = price_usd - avg_price_in_search
+    - price_ratio_to_search_avg = price_usd / avg_price_in_search
+    """
+    print("Adding price relative to search average features...")
+    df_context = df.copy()
+    
+    if 'price_usd' in df_context.columns and 'avg_price_usd_in_search' in df_context.columns:
+        df_context['price_deviation_from_search_avg'] = df_context['price_usd'] - df_context['avg_price_usd_in_search']
+        
+        # Handle division by zero or NaN in avg_price_usd_in_search
+        df_context['price_ratio_to_search_avg'] = np.where(
+            (df_context['avg_price_usd_in_search'].notna()) & (df_context['avg_price_usd_in_search'] != 0),
+            df_context['price_usd'] / df_context['avg_price_usd_in_search'],
+            np.nan # Or some other placeholder like 1.0 if price_usd is also 0, or if avg is 0
+        )
+        # If price_usd is 0 and avg_price_usd_in_search is 0, ratio could be 1 (same) or 0.
+        # If price_usd > 0 and avg_price_usd_in_search is 0, could be a large number or np.inf.
+        # Current np.nan is a safe default.
+        print("  Added price_deviation_from_search_avg, price_ratio_to_search_avg")
+    else:
+        print("  Skipping price relative to search average: required columns missing (price_usd, avg_price_usd_in_search).")
+    return df_context
+
+def _add_starrating_relative_to_search_avg(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates star rating relative to the average star rating in the search context (srch_id).
+    - starrating_deviation_from_search_avg = prop_starrating - avg_prop_starrating_in_search
+    """
+    print("Adding starrating relative to search average feature...")
+    df_context = df.copy()
+
+    if 'prop_starrating' in df_context.columns and 'avg_prop_starrating_in_search' in df_context.columns:
+        df_context['starrating_deviation_from_search_avg'] = df_context['prop_starrating'] - df_context['avg_prop_starrating_in_search']
+        print("  Added starrating_deviation_from_search_avg")
+    else:
+        print("  Skipping starrating relative to search average: required columns missing (prop_starrating, avg_prop_starrating_in_search).")
+    return df_context
+
+def _add_price_relative_to_prop_hist_avg(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates price relative to the property's own average historical price.
+    - price_deviation_from_prop_hist_avg = price_usd - avg_price_usd_for_prop
+    - price_ratio_to_prop_hist_avg = price_usd / avg_price_usd_for_prop
+    """
+    print("Adding price relative to property's historical average features...")
+    df_context = df.copy()
+
+    if 'price_usd' in df_context.columns and 'avg_price_usd_for_prop' in df_context.columns:
+        df_context['price_deviation_from_prop_hist_avg'] = df_context['price_usd'] - df_context['avg_price_usd_for_prop']
+        
+        df_context['price_ratio_to_prop_hist_avg'] = np.where(
+            (df_context['avg_price_usd_for_prop'].notna()) & (df_context['avg_price_usd_for_prop'] != 0),
+            df_context['price_usd'] / df_context['avg_price_usd_for_prop'],
+            np.nan 
+        )
+        print("  Added price_deviation_from_prop_hist_avg, price_ratio_to_prop_hist_avg")
+    else:
+        print("  Skipping price relative to property historical average: required columns missing (price_usd, avg_price_usd_for_prop).")
+    return df_context
+
+def _add_normalized_price_in_search(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates normalized price within the search result set (srch_id).
+    - normalized_price_in_search = (price_usd - min_price_in_search) / (max_price_in_search - min_price_in_search)
+    """
+    print("Adding normalized price in search feature...")
+    df_context = df.copy()
+
+    required_cols = ['price_usd', 'min_price_usd_in_search', 'max_price_usd_in_search']
+    if all(col in df_context.columns for col in required_cols):
+        denominator = df_context['max_price_usd_in_search'] - df_context['min_price_usd_in_search']
+        
+        df_context['normalized_price_in_search'] = np.where(
+            (denominator.notna()) & (denominator != 0),
+            (df_context['price_usd'] - df_context['min_price_usd_in_search']) / denominator,
+            0.5 # Or np.nan or 0; 0.5 if min_price=max_price (e.g., only one item or all same price)
+        )
+        # If min_price == max_price (denominator is 0), all items have same price relative to range.
+        # Setting to 0.5 implies it's in the middle of a non-existent range.
+        # Can also fill with 0 if only one item.
+        print("  Added normalized_price_in_search")
+    else:
+        print(f"  Skipping normalized price in search: required columns missing. Need: {required_cols}")
+    return df_context
+
+# --- End New Contextual Features ---
+
 def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
     Applies all feature engineering steps to the DataFrame.
@@ -313,6 +529,20 @@ def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
 
     # Add average search context features (can be commented out for testing)
     df_engineered = _add_avg_search_context_features(df_engineered)
+
+    # Add other search context aggregations (can be commented out for testing)
+    df_engineered = _add_stddev_search_context_features(df_engineered)
+    df_engineered = _add_median_search_context_features(df_engineered)
+    # df_engineered = _add_min_search_context_features(df_engineered)
+    # df_engineered = _add_max_search_context_features(df_engineered)
+
+    # --- Apply New Contextual Features ---
+    print("Applying new contextual features...")
+    df_engineered = _add_price_relative_to_search_avg(df_engineered)
+    df_engineered = _add_starrating_relative_to_search_avg(df_engineered)
+    df_engineered = _add_price_relative_to_prop_hist_avg(df_engineered)
+    df_engineered = _add_normalized_price_in_search(df_engineered)
+    # --- End Apply New Contextual Features ---
 
     print(f"Feature engineering complete. Example cols: {df_engineered.columns[:15].tolist()}...") # Adjusted to show more cols
     return df_engineered
