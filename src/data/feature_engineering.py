@@ -105,6 +105,128 @@ def _create_booking_window_weeks_feature(df: pd.DataFrame) -> pd.DataFrame:
 
 # --- End New Date & Time Feature Functions ---
 
+def _add_avg_property_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates average numeric features per prop_id and merges them back.
+
+    Features averaged:
+    - price_usd
+    - prop_starrating
+    - prop_review_score
+    - prop_location_score1
+    - prop_location_score2
+    - prop_log_historical_price
+    - srch_query_affinity_score
+    - promotion_flag (becomes proportion)
+    """
+    print("Adding average property features...")
+    features_to_average = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag'
+    ]
+
+    # Create a copy to avoid SettingWithCopyWarning if df is a slice
+    df_with_avgs = df.copy()
+
+    for feature in features_to_average:
+        if feature in df_with_avgs.columns:
+            # Calculate the mean, grouped by prop_id
+            avg_feature_name = f'avg_{feature}_for_prop'
+            # Ensure prop_id is suitable as an index for transform or for merge
+            # Use transform to broadcast the mean back to the original DataFrame shape
+            try:
+                # Check for potential all-NaN slices if a prop_id has only NaNs for a feature
+                # Group by prop_id and calculate mean for the current feature
+                grouped = df_with_avgs.groupby('prop_id')[feature]
+                
+                # Check if all values in any group are NaN, which would make mean NaN
+                # Transform is generally robust to this, but direct mean might need check
+                # For simplicity, we rely on transform's behavior or direct merge
+                
+                averages = grouped.transform('mean')
+                df_with_avgs[avg_feature_name] = averages
+                print(f"  Added {avg_feature_name}")
+
+            except Exception as e:
+                print(f"  Could not compute or merge average for {feature}. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found in DataFrame, skipping average calculation.")
+            
+    return df_with_avgs
+
+def _add_stddev_property_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates standard deviation of numeric features per prop_id and merges them back.
+    Same list of features as for averages.
+    """
+    print("Adding stddev property features...")
+    features_to_aggregate = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag' # Stddev of a 0/1 flag can indicate variability in promotion
+    ]
+    df_with_stddevs = df.copy()
+
+    for feature in features_to_aggregate:
+        if feature in df_with_stddevs.columns:
+            stddev_feature_name = f'stddev_{feature}_for_prop'
+            try:
+                grouped = df_with_stddevs.groupby('prop_id')[feature]
+                stddevs = grouped.transform('std')
+                df_with_stddevs[stddev_feature_name] = stddevs
+                # Stddev can be NaN if a group has only one member or all members are identical.
+                # Fill NaN stddevs with 0, assuming no variability if cannot be calculated or only one data point.
+                df_with_stddevs[stddev_feature_name] = df_with_stddevs[stddev_feature_name].fillna(0)
+                print(f"  Added {stddev_feature_name}")
+            except Exception as e:
+                print(f"  Could not compute or merge stddev for {feature}. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found, skipping stddev calculation.")
+    return df_with_stddevs
+
+def _add_median_property_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates median of numeric features per prop_id and merges them back.
+    Same list of features as for averages.
+    """
+    print("Adding median property features...")
+    features_to_aggregate = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag'
+    ]
+    df_with_medians = df.copy()
+
+    for feature in features_to_aggregate:
+        if feature in df_with_medians.columns:
+            median_feature_name = f'median_{feature}_for_prop'
+            try:
+                grouped = df_with_medians.groupby('prop_id')[feature]
+                medians = grouped.transform('median')
+                df_with_medians[median_feature_name] = medians
+                print(f"  Added {median_feature_name}")
+            except Exception as e:
+                print(f"  Could not compute or merge median for {feature}. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found, skipping median calculation.")
+    return df_with_medians
+
 def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
     Applies all feature engineering steps to the DataFrame.
@@ -133,6 +255,15 @@ def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
 
     # User Related Features
     df_engineered = _add_is_recurring_customer(df_engineered)
+
+    # Add average property features
+    df_engineered = _add_avg_property_features(df_engineered)
+
+    # Add stddev property features (can be commented out for testing)
+    df_engineered = _add_stddev_property_features(df_engineered)
+
+    # Add median property features (can be commented out for testing)
+    df_engineered = _add_median_property_features(df_engineered)
 
     print(f"Feature engineering complete. Example cols: {df_engineered.columns[:15].tolist()}...") # Adjusted to show more cols
     return df_engineered
