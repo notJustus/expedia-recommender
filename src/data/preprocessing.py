@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np # Added for np.exp
 
 def handle_missing_visitor_hist_starrating(df: pd.DataFrame) -> pd.DataFrame:
     """Handles missing values for the 'visitor_hist_starrating' feature."""
@@ -231,35 +230,3 @@ def handle_missing_values(df: pd.DataFrame, is_train: bool = True, imputation_va
             df[f'comp{i}_has_data'] = 0
     
     return df, (calculated_imputation_values if is_train else None)
-
-def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Adds new features to the DataFrame."""
-    df = df.copy()
-
-    # De-log historical price: prop_log_historical_price = 0 if not sold. 
-    # np.exp(0) is 1. So, if it was 0 (not sold), historical price becomes 1.
-    # If it was a valid log price, it gets converted back.
-    # This might need adjustment if a 0 in log_historical_price truly means $0 price vs. not sold/unknown.
-    # Assuming 0 in log scale means a very low actual price or was simply set to 0 for missing.
-    if 'prop_log_historical_price' in df.columns and 'price_usd' in df.columns:
-        df['historical_price_usd'] = np.exp(df['prop_log_historical_price'])
-        # Avoid division by zero or issues with historical_price_usd=0 or 1 (if exp(0))
-        # Only calculate diff if historical_price is somewhat realistic (e.g. > 1 after exp)
-        df['price_diff_from_historical_abs'] = df['price_usd'] - df['historical_price_usd']
-        df['price_ratio_to_historical'] = df['price_usd'] / df['historical_price_usd'].replace(0, np.nan) # Avoid div by zero
-        df['price_ratio_to_historical'] = df['price_ratio_to_historical'].fillna(1) # If historical was 0, assume ratio is 1 (no difference)
-
-    if 'prop_starrating' in df.columns and 'visitor_hist_starrating' in df.columns and 'has_visitor_purchase_history' in df.columns:
-        # Only calculate diff if there is a history
-        df['starrating_diff_from_hist'] = df['prop_starrating'] - df['visitor_hist_starrating']
-        # Set to 0 or a neutral value if no history, or handle via missingness of visitor_hist_starrating
-        df.loc[df['has_visitor_purchase_history'] == 0, 'starrating_diff_from_hist'] = 0 # Or np.nan and let imputation handle
-
-    # Example: Interaction between prop_review_score and prop_starrating
-    if 'prop_review_score' in df.columns and 'prop_starrating' in df.columns:
-        # Ensure prop_starrating is not 0 to avoid division by zero if that makes sense
-        df['review_per_star'] = df['prop_review_score'] / df['prop_starrating'].replace(0, np.nan)
-        df['review_per_star'] = df['review_per_star'].fillna(df['prop_review_score']) # if star is 0, just use review score
-
-    print(f"Engineered features added. Current columns: {df.columns.tolist()[:15]}...") # Print first few
-    return df

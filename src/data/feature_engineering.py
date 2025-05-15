@@ -17,26 +17,13 @@ def _create_value_for_money_score(df: pd.DataFrame, max_score: float = 100.0) ->
     Handles cases where price_usd is 0 or NaN.
     New column 'value_for_money_score' is added.
     """
-    df['value_for_money_score'] = 0.0  # Initialize column
-
-    # Case 1: price_usd > 0
+    df['value_for_money_score'] = 0.0
     price_positive_mask = df['price_usd'] > 0
-    # Ensure prop_review_score is also not NaN for these calculations if it can be
-    # (already handled by preprocessing which fills prop_review_score NaNs with 0)
     df.loc[price_positive_mask, 'value_for_money_score'] = \
         df.loc[price_positive_mask, 'prop_review_score'] / df.loc[price_positive_mask, 'price_usd']
-
-    # Case 2: price_usd == 0 and prop_review_score > 0 (free hotel with good reviews)
-    # Assign a fixed high score as a placeholder for exceptional value.
     free_good_review_mask = (df['price_usd'] == 0) & (df['prop_review_score'] > 0)
     df.loc[free_good_review_mask, 'value_for_money_score'] = max_score
-
-    # Fill any NaNs that might have occurred (e.g., if price_usd was NaN or for 0/0 cases if not covered)
-    # price_positive_mask handles division by zero for price_usd. 
-    # If price_usd was NaN, it wouldn't satisfy price_positive_mask or free_good_review_mask,
-    # so value_for_money_score would remain 0.0 (from initialization) or become NaN then 0.0.
     df['value_for_money_score'] = df['value_for_money_score'].fillna(0.0)
-    
     return df
 
 def _create_domestic_travel_feature(df: pd.DataFrame) -> pd.DataFrame:
@@ -45,32 +32,58 @@ def _create_domestic_travel_feature(df: pd.DataFrame) -> pd.DataFrame:
     1 if visitor_location_country_id == prop_country_id, 0 otherwise.
     Handles NaN in ID columns by defaulting to 0 (not domestic).
     """
-    # Direct comparison produces True, False, or NaN if any operand is NaN.
     comparison_result = (df['visitor_location_country_id'] == df['prop_country_id'])
-    
-    # Convert boolean to float (True->1.0, False->0.0) to handle NaNs, then fill NaNs with 0.
     df['is_domestic_travel'] = comparison_result.astype(float).fillna(0).astype(int)
+    return df
+
+# New private functions for features previously in preprocessing.add_engineered_features
+def _create_historical_price_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Creates features based on historical price data."""
+    if 'prop_log_historical_price' in df.columns and 'price_usd' in df.columns:
+        df['historical_price_usd'] = np.exp(df['prop_log_historical_price'])
+        df['price_diff_from_historical_abs'] = df['price_usd'] - df['historical_price_usd']
+        df['price_ratio_to_historical'] = df['price_usd'] / df['historical_price_usd'].replace(0, np.nan)
+        df['price_ratio_to_historical'] = df['price_ratio_to_historical'].fillna(1)
+    return df
+
+def _create_starrating_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Creates features based on property and visitor star ratings."""
+    if ('prop_starrating' in df.columns and 
+        'visitor_hist_starrating' in df.columns and 
+        'has_visitor_purchase_history' in df.columns):
+        df['starrating_diff_from_hist'] = df['prop_starrating'] - df['visitor_hist_starrating']
+        df.loc[df['has_visitor_purchase_history'] == 0, 'starrating_diff_from_hist'] = 0
+    return df
+
+def _create_review_score_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Creates features based on review scores and star ratings."""
+    if 'prop_review_score' in df.columns and 'prop_starrating' in df.columns:
+        df['review_per_star'] = df['prop_review_score'] / df['prop_starrating'].replace(0, np.nan)
+        df['review_per_star'] = df['review_per_star'].fillna(df['prop_review_score'])
     return df
 
 def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
     Applies all feature engineering steps to the DataFrame.
-    
+
     Args:
         df: Input DataFrame.
-        
-    Returns:
-        DataFrame with engineered features.
-    """
-    df_engineered = df.copy() # Work on a copy to avoid modifying the original DataFrame
-    
-    # 1. Create price rank feature
-    df_engineered = _create_price_rank_feature(df_engineered)
-    
-    # 2. Create value-for-money score
-    df_engineered = _create_value_for_money_score(df_engineered)
 
-    # 3. Create domestic travel feature
+    Returns:
+        DataFrame: DataFrame with engineered features.
+    """
+    print("Starting feature engineering...")
+    df_engineered = df.copy()
+
+    # Existing features
+    df_engineered = _create_price_rank_feature(df_engineered)
+    df_engineered = _create_value_for_money_score(df_engineered)
     df_engineered = _create_domestic_travel_feature(df_engineered)
 
+    # Newly integrated features
+    df_engineered = _create_historical_price_features(df_engineered)
+    df_engineered = _create_starrating_features(df_engineered)
+    df_engineered = _create_review_score_features(df_engineered)
+
+    print(f"Feature engineering complete. Example cols: {df_engineered.columns[:10].tolist()}...")
     return df_engineered

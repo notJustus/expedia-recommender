@@ -3,23 +3,28 @@ import numpy as np
 from pathlib import Path
 from typing import Tuple, Optional
 
-def load_data(data_path: str, sample_size: Optional[int] = None) -> pd.DataFrame:
+def load_data(data_path: str, nrows: Optional[int] = None) -> pd.DataFrame:
     """
-    Load the Expedia hotel recommendation dataset.
+    Load the dataset from the given path.
     
     Args:
-        data_path (str): Path to the data file
-        sample_size (Optional[int]): If provided, load only a sample of the data
+        data_path (str): Path to the data file.
+        nrows (Optional[int]): If provided, load only the first 'nrows' of the data.
         
     Returns:
-        pd.DataFrame: Loaded dataset
+        pd.DataFrame: Loaded dataset.
     """
-    df = pd.read_csv(data_path)
-    
-    if sample_size is not None:
-        df = df.sample(n=sample_size, random_state=42)
-    
-    return df
+    try:
+        df = pd.read_csv(data_path, nrows=nrows)
+        print(f"Successfully loaded data from {data_path}. Shape: {df.shape}")
+        return df
+    except FileNotFoundError:
+        print(f"Error: Data file not found at {data_path}")
+        # Consider raising the error or returning None based on desired handling upstream
+        raise # Reraise the exception to be handled by the caller
+    except Exception as e:
+        print(f"An error occurred while loading data from {data_path}: {e}")
+        raise # Reraise
 
 def get_feature_types(df: pd.DataFrame) -> dict:
     """

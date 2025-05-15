@@ -10,7 +10,10 @@ import time # For timing
 # Add src directory to Python path
 sys.path.append(os.path.dirname(__file__))
 
-from data.preprocessing import handle_missing_values, add_engineered_features
+# Updated import: load_data from data_loader, and others from preprocessing
+from data.data_loader import load_data 
+from data.preprocessing import handle_missing_values
+from data.feature_engineering import apply_feature_engineering
 from models.lambdamart import (
     create_relevance_target,
     train_lambdamart_model,
@@ -42,17 +45,6 @@ def define_feature_columns(df: pd.DataFrame) -> list[str]:
     # Further filtering can happen based on domain knowledge or feature selection later.
     return potential_features
 
-def load_dataframe(file_path: str, nrows: int | None = None) -> pd.DataFrame | None:
-    """Loads a CSV file into a pandas DataFrame."""
-    print(f"Loading {file_path}...")
-    try:
-        df = pd.read_csv(file_path, nrows=nrows)
-        print(f"Data loaded. Shape: {df.shape}")
-        return df
-    except FileNotFoundError:
-        print(f"Error: {file_path} not found. Ensure path is correct from workspace root.")
-        return None
-
 def preprocess_and_engineer_features(
     df: pd.DataFrame, 
     is_train: bool = True, 
@@ -64,18 +56,17 @@ def preprocess_and_engineer_features(
     
     # 1. Handle missing values
     # This will return the processed df and, if is_train, the imputation_params
-    # df_imputed, calculated_imputation_params = handle_missing_values(
-    #     df_copy, 
-    #     is_train=is_train, 
-    #     imputation_values=imputation_params_for_test
-    # )
-    # print(f"Missing values handled. Shape: {df_imputed.shape}")
-    df_imputed = df_copy
-    calculated_imputation_params = None
+    df_imputed, calculated_imputation_params = handle_missing_values(
+        df_copy, 
+        is_train=is_train, 
+        imputation_values=imputation_params_for_test
+    )
+    print(f"Missing values handled. Shape after imputation: {df_imputed.shape}")
 
-    # 2. Add engineered features
-    df_engineered = add_engineered_features(df_imputed)
-    print(f"Engineered features added. Shape: {df_engineered.shape}")
+    # 2. Apply feature engineering
+    df_engineered = apply_feature_engineering(df_imputed)
+    # The print statement for engineered features being added is now inside apply_feature_engineering itself.
+    # The shape after engineering is printed below.
     
     print(f"Preprocessing & feature engineering complete. Final shape: {df_engineered.shape}")
     return df_engineered, calculated_imputation_params
@@ -249,9 +240,14 @@ def run_prediction_pipeline(
         "final_processed_test_shape": None,
         "X_test_shape": None
     }
-    test_df = load_dataframe(test_file_path, nrows=nrows)
-    if test_df is None:
-        return test_data_log_summary # Return empty summary
+    try:
+        test_df = load_data(data_path=test_file_path, nrows=nrows)
+    except Exception:
+        print(f"Failed to load test data from {test_file_path}. Aborting prediction pipeline.")
+        return test_data_log_summary
+    
+    if test_df is None: # Should be caught by exception now, but good for safety
+        return test_data_log_summary 
     test_data_log_summary["raw_test_shape"] = test_df.shape
 
     test_ids_df = test_df[['srch_id', 'prop_id']].copy()
@@ -302,9 +298,14 @@ def main():
     print("Starting training and prediction pipeline...")
     run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # 1. Load Training Data
-    train_df_raw = load_dataframe(TRAIN_FILE, nrows=NROWS_CONFIG)
-    if train_df_raw is None:
+    # 1. Load Training Data using load_data from data_loader
+    try:
+        train_df_raw = load_data(data_path=TRAIN_FILE, nrows=NROWS_CONFIG)
+    except Exception:
+        print(f"Failed to load training data from {TRAIN_FILE}. Aborting.")
+        return
+
+    if train_df_raw is None: # Should be caught by exception now
         return
     raw_train_shape_log = train_df_raw.shape
     
