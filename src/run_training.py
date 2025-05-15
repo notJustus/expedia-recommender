@@ -31,6 +31,7 @@ LOGS_DIR = "logs"
 # Development/Debug flag (set to None for full run)
 # NROWS_CONFIG = 500000 # For faster development with a subset of data
 NROWS_CONFIG = 500000 # For full run
+PERFORM_IMPUTATION = False # Set to False to skip missing value imputation
 
 
 # --- Helper Functions ---
@@ -50,23 +51,30 @@ def preprocess_and_engineer_features(
     is_train: bool = True, 
     imputation_params_for_test: dict | None = None
 ) -> tuple[pd.DataFrame, dict | None]:
-    """Handles preprocessing, missing values, and feature engineering."""
+    """Handles preprocessing, missing values (conditionally), and feature engineering."""
     print(f"Starting preprocessing & feature engineering for {'training' if is_train else 'test'} data...")
     df_copy = df.copy()
     
-    # 1. Handle missing values
-    # This will return the processed df and, if is_train, the imputation_params
-    df_imputed, calculated_imputation_params = handle_missing_values(
-        df_copy, 
-        is_train=is_train, 
-        imputation_values=imputation_params_for_test
-    )
-    print(f"Missing values handled. Shape after imputation: {df_imputed.shape}")
+    calculated_imputation_params = None # Initialize
+    df_processed_stage1 = df_copy # Start with the original copy
 
-    # 2. Apply feature engineering
-    df_engineered = apply_feature_engineering(df_imputed)
-    # The print statement for engineered features being added is now inside apply_feature_engineering itself.
-    # The shape after engineering is printed below.
+    if PERFORM_IMPUTATION:
+        print("Performing missing value imputation...")
+        df_processed_stage1, calculated_imputation_params = handle_missing_values(
+            df_copy, 
+            is_train=is_train, 
+            imputation_values=imputation_params_for_test
+        )
+        print(f"Missing values handled. Shape after imputation: {df_processed_stage1.shape}")
+    else:
+        print("Skipping missing value imputation as per PERFORM_IMPUTATION flag.")
+        # If not imputing, ensure imputation_params_for_test (if this is test run) is None for consistency,
+        # and calculated_imputation_params (if this is train run) remains None.
+        if not is_train:
+            imputation_params_for_test = None # Ensure test doesn't use old params if train skipped
+    
+    # Apply feature engineering regardless of imputation, on the current state of df_processed_stage1
+    df_engineered = apply_feature_engineering(df_processed_stage1)
     
     print(f"Preprocessing & feature engineering complete. Final shape: {df_engineered.shape}")
     return df_engineered, calculated_imputation_params
