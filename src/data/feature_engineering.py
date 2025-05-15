@@ -1,6 +1,31 @@
 import pandas as pd
 import numpy as np
 
+
+def _add_is_recurring_customer(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds a binary feature 'is_recurring_customer' to the DataFrame.
+    A customer is considered recurring if they have a historical star rating
+    or historical average daily rate.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame, must contain 
+                           'visitor_hist_starrating' and 'visitor_hist_adr_usd'.
+
+    Returns:
+        pd.DataFrame: DataFrame with the added 'is_recurring_customer' column.
+    """
+    if 'visitor_hist_starrating' not in df.columns or 'visitor_hist_adr_usd' not in df.columns:
+        raise ValueError("DataFrame must contain 'visitor_hist_starrating' and 'visitor_hist_adr_usd' columns.")
+        
+    # True if 'visitor_hist_starrating' is not NaN OR 'visitor_hist_adr_usd' is not NaN
+    # .notna() returns True for non-NaN values
+    condition = df['visitor_hist_starrating'].notna() | df['visitor_hist_adr_usd'].notna()
+    
+    df['is_recurring_customer'] = condition.astype(int)
+    return df
+
+
 def _create_price_rank_feature(df: pd.DataFrame) -> pd.DataFrame:
     """
     Ranks hotels by price_usd within each search (srch_id).
@@ -105,6 +130,9 @@ def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df_engineered = _create_search_month_feature(df_engineered)
     df_engineered = _create_is_weekend_search_feature(df_engineered)
     df_engineered = _create_booking_window_weeks_feature(df_engineered)
+
+    # User Related Features
+    df_engineered = _add_is_recurring_customer(df_engineered)
 
     print(f"Feature engineering complete. Example cols: {df_engineered.columns[:15].tolist()}...") # Adjusted to show more cols
     return df_engineered
