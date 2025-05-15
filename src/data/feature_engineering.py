@@ -227,6 +227,52 @@ def _add_median_property_features(df: pd.DataFrame) -> pd.DataFrame:
             print(f"  Feature {feature} not found, skipping median calculation.")
     return df_with_medians
 
+def _add_avg_search_context_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates average of property-related features per srch_id and merges them back.
+    Also adds a count of properties per search.
+    """
+    print("Adding average search context features (grouped by srch_id)...")
+    df_with_search_ctx = df.copy()
+
+    # Count of options in search
+    if 'srch_id' in df_with_search_ctx.columns and 'prop_id' in df_with_search_ctx.columns:
+        try:
+            df_with_search_ctx['num_options_in_search'] = df_with_search_ctx.groupby('srch_id')['prop_id'].transform('size')
+            print("  Added num_options_in_search")
+        except Exception as e:
+            print(f"  Could not compute num_options_in_search. Error: {e}")
+    else:
+        print("  Skipping num_options_in_search: srch_id or prop_id column missing.")
+
+    features_to_average_by_search = [
+        'price_usd',
+        'prop_starrating',
+        'prop_review_score',
+        'prop_location_score1',
+        'prop_location_score2',
+        'prop_log_historical_price',
+        'srch_query_affinity_score',
+        'promotion_flag', # Average of 0/1 flag gives proportion
+        'prop_brand_bool',  # Average of 0/1 flag gives proportion
+        'orig_destination_distance'
+    ]
+
+    for feature in features_to_average_by_search:
+        if feature in df_with_search_ctx.columns:
+            avg_feature_name = f'avg_{feature}_in_search'
+            try:
+                # Use transform to broadcast the mean back to the original DataFrame shape
+                averages = df_with_search_ctx.groupby('srch_id')[feature].transform('mean')
+                df_with_search_ctx[avg_feature_name] = averages
+                print(f"  Added {avg_feature_name}")
+            except Exception as e:
+                print(f"  Could not compute or merge average for {feature} in search. Error: {e}")
+        else:
+            print(f"  Feature {feature} not found, skipping its average calculation for search context.")
+            
+    return df_with_search_ctx
+
 def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
     Applies all feature engineering steps to the DataFrame.
@@ -264,6 +310,9 @@ def apply_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
 
     # Add median property features (can be commented out for testing)
     df_engineered = _add_median_property_features(df_engineered)
+
+    # Add average search context features (can be commented out for testing)
+    df_engineered = _add_avg_search_context_features(df_engineered)
 
     print(f"Feature engineering complete. Example cols: {df_engineered.columns[:15].tolist()}...") # Adjusted to show more cols
     return df_engineered
