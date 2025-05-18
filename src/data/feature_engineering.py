@@ -9,7 +9,7 @@ def _add_is_recurring_customer(df: pd.DataFrame) -> pd.DataFrame:
     or historical average daily rate.
 
     Args:
-        df (pd.DataFrame): Input DataFrame, must contain 
+        df (pd.DataFrame): Input DataFrame, must contain  
                            'visitor_hist_starrating' and 'visitor_hist_adr_usd'.
 
     Returns:
